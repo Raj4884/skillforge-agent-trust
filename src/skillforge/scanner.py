@@ -88,13 +88,16 @@ def scan_files(skill_dir: str | Path) -> tuple[list[Finding], list[str]]:
         return findings, [f"Skill directory does not exist or is not a directory: {root}"]
 
     entries_seen = 0
-    stop = False
-
     def record_walk_error(exc: OSError) -> None:
         errors.append(f"Could not traverse {exc.filename or root}: {exc}")
 
     for current, directories, filenames in os.walk(root, topdown=True, followlinks=False, onerror=record_walk_error):
         current_path = Path(current)
+        entries_seen += len(directories) + len(filenames)
+        if entries_seen > MAX_ENTRIES:
+            errors.append(f"Entry limit reached ({MAX_ENTRIES}); remaining files were not scanned.")
+            break
+
         kept_directories = []
         for dirname in sorted(directories):
             child = current_path / dirname
@@ -104,12 +107,6 @@ def scan_files(skill_dir: str | Path) -> tuple[list[Finding], list[str]]:
         directories[:] = kept_directories
 
         for filename in sorted(filenames):
-            entries_seen += 1
-            if entries_seen > MAX_ENTRIES:
-                errors.append(f"Entry limit reached ({MAX_ENTRIES}); remaining files were not scanned.")
-                stop = True
-                break
-
             path = current_path / filename
             if path.is_symlink() or path.suffix.lower() not in TEXT_SUFFIXES:
                 continue
@@ -131,8 +128,5 @@ def scan_files(skill_dir: str | Path) -> tuple[list[Finding], list[str]]:
                             file_path=relative,
                             line=line_number,
                         ))
-        if stop:
-            break
-
     findings.sort(key=lambda item: (item.file_path, item.line, item.rule_id))
     return findings, errors
