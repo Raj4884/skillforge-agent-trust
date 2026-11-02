@@ -1,3 +1,4 @@
 """SkillForge: evidence-based inspection for AI agent skills."""
 
-__version__ = "0.1.0"
+# Single source of truth: pyproject.toml reads this value (see [tool.setuptools.dynamic]).
+__version__ = "0.1.1"
