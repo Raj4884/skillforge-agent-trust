@@ -2,7 +2,7 @@
 
 SkillForge is an open-source toolkit for inspecting AI agent skills and producing transparent, reproducible evidence about their structure, declared capabilities, and potential risks.
 
-> **Status: early prototype.** The current release performs static inspection only. It does not execute skill code and cannot prove that a skill is safe.
+> **Status: early prototype (v0.1.1).** The current release performs static inspection only. It does not execute skill code and cannot prove that a skill is safe.
 
 ## Why SkillForge?
 
@@ -24,7 +24,7 @@ Requires Python 3.10 or newer.
 ```bash
 git clone https://github.com/Raj4884/skillforge-agent-trust.git
 cd skillforge-agent-trust
-python -m pip install -e .
+python -m pip install -e ".[dev]"
 skillforge scan examples/demo-skill
 ```
 
@@ -37,48 +37,61 @@ python -m skillforge scan examples/demo-skill
 JSON output:
 
 ```bash
-python -m skillforge scan examples/demo-skill --format json
+skillforge scan examples/demo-skill --format json
 ```
+
+Fail a CI job when a critical finding is present:
+
+```bash
+skillforge scan examples/demo-skill --fail-on critical
+```
+
+Available thresholds: `none`, `low`, `medium`, `high`, and `critical`. By default, findings do not fail the command; scan errors return exit code 2.
 
 Run tests:
 
 ```bash
-python -m pytest
+python -m pytest -q
 ```
 
 ## Current checks
 
-| Rule | Meaning |
-|---|---|
-| SF001 | Shell download piped into a shell interpreter |
-| SF002 | Recursive force deletion pattern |
-| SF003 | References to common credential locations |
-| SF004 | Broad environment-variable access |
-| SF005 | Prompt or instruction override language |
+| Rule | Severity | Meaning |
+|---|---|---|
+| SF001 | Critical | Shell download piped into an interpreter |
+| SF002 | High | Recursive force deletion targeting a broad path |
+| SF003 | Medium | References to common credential locations |
+| SF004 | Low | Common environment-variable access patterns |
+| SF005 | Medium | Prompt or instruction override language |
 
-Findings are heuristic indicators for human review, not proof of maliciousness. False positives and false negatives are expected in this early version.
+See [the rule reference](docs/RULES.md) for limitations and contribution requirements. Findings are heuristic indicators for human review, not proof of maliciousness. False positives and false negatives are expected.
 
 ## Design principles
 
 1. **Evidence over opaque scores.** Every finding should identify the rule, severity, location, and explanation.
-2. **Reproducibility.** The same input and scanner version should produce the same report.
+2. **Reproducibility.** Traversal and findings are sorted; report paths are relative.
 3. **Safe by default.** Static inspection must not execute untrusted skill code.
-4. **Honest limitations.** A clean report is not a safety guarantee.
-5. **Small, reviewable steps.** Rules should be documented and tested.
+4. **Bounded input.** File reads, metadata size, and traversal entry count are limited.
+5. **Honest limitations.** A clean report is not a safety guarantee.
+6. **Small, reviewable steps.** Rules should be documented and tested.
+
+The scanner skips common generated directories such as `.git`, `.venv`, `venv`, and `node_modules`, as well as symlinks. It scans supported text extensions only.
 
 ## Roadmap
 
 - [x] Initial parser, static rules, CLI, tests, and CI workflow
-- [ ] Harden path traversal, symlink handling, and file-size limits
-- [ ] Add structured rule metadata and stable report schema
-- [ ] Add fixture corpus and false-positive regression tests
+- [x] Bounded file reads, traversal limits, symlink skipping, and deterministic findings
+- [x] Basic multiline descriptions and duplicate metadata validation
+- [x] CI matrix for Python 3.10–3.13
+- [ ] Add rule confidence and matched evidence snippets
+- [ ] Expand fixture corpus and false-positive regression tests
 - [ ] Add baseline comparison between skill versions
 - [ ] Design isolated dynamic evaluation (separate milestone; never run on the host)
 - [ ] Publish reproducible benchmark protocol
 
 ## Security
 
-Please read [the threat model](docs/THREAT_MODEL.md) before using SkillForge in a security-sensitive workflow. Report suspected vulnerabilities privately to the repository maintainer rather than posting exploitable details in a public issue.
+Please read [the threat model](docs/THREAT_MODEL.md) and [security policy](SECURITY.md) before using SkillForge in a security-sensitive workflow. A clean scan is not certification.
 
 ## Contributing
 
