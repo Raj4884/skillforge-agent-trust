@@ -1,15 +1,35 @@
-"""Minimal, dependency-free SKILL.md frontmatter parser.
+"""Small dependency-free parser for SKILL.md YAML frontmatter.
 
-This intentionally supports a small YAML-like subset. It is not a general YAML
-parser; unsupported or malformed metadata is reported clearly.
+This is intentionally not a complete YAML implementation. It supports the
+required name/description fields, quoted scalars, comments, and folded/literal
+block descriptions. Unsupported YAML features should be handled explicitly.
 """
 
+import re
+import textwrap
 from pathlib import Path
+
 from .models import SkillMetadata
+
+MAX_METADATA_BYTES = 256_000
 
 
 class SkillParseError(ValueError):
     """Raised when a skill entry point cannot be parsed."""
+
+
+def _clean_scalar(value: str, line_number: int) -> str:
+    value = value.strip()
+    if not value:
+        return ""
+    if value[0] in {"'", '"'}:
+        quote = value[0]
+        if len(value) < 2 or value[-1] != quote:
+            raise SkillParseError(f"Unclosed quoted value at line {line_number}")
+        return value[1:-1].replace("\\" + quote, quote)
+    # A YAML comment starts after whitespace; preserve hashes inside URLs/words.
+    value = re.sub(r"\s+#.*$", "", value).strip()
+    return value
 
 
 def parse_skill(skill_dir: str | Path) -> tuple[SkillMetadata, Path]:
@@ -18,11 +38,15 @@ def parse_skill(skill_dir: str | Path) -> tuple[SkillMetadata, Path]:
         raise SkillParseError(f"Skill directory does not exist: {root}")
 
     skill_file = root / "SKILL.md"
-    if not skill_file.is_file():
-        raise SkillParseError(f"Missing SKILL.md in: {root}")
+    if not skill_file.is_file() or skill_file.is_symlink():
+        raise SkillParseError(f"Missing regular SKILL.md file in: {root}")
 
     try:
-        content = skill_file.read_text(encoding="utf-8")
+        with skill_file.open("rb") as stream:
+            raw = stream.read(MAX_METADATA_BYTES + 1)
+        if len(raw) > MAX_METADATA_BYTES:
+            raise SkillParseError(f"SKILL.md exceeds {MAX_METADATA_BYTES} byte limit")
+        content = raw.decode("utf-8")
     except (OSError, UnicodeError) as exc:
         raise SkillParseError(f"Could not read SKILL.md: {exc}") from exc
 
@@ -36,18 +60,36 @@ def parse_skill(skill_dir: str | Path) -> tuple[SkillMetadata, Path]:
         raise SkillParseError("Unclosed YAML frontmatter") from exc
 
     metadata: dict[str, str] = {}
-    for number, line in enumerate(lines[1:end], start=2):
-        if not line.strip() or line.lstrip().startswith("#"):
+    index = 1
+    while index < end:
+        line = lines[index]
+        number = index + 1
+        index += 1
+        if not line.strip() or line.lstrip().startswith("#") or line[:1].isspace():
             continue
-        if ":" not in line:
-            raise SkillParseError(f"Invalid frontmatter at line {number}")
-        key, value = line.split(":", 1)
-        key = key.strip()
-        value = value.strip().strip('"').strip("'")
+
+        match = re.match(r"^([A-Za-z_][A-Za-z0-9_-]*)\s*:\s*(.*)$", line)
+        if not match:
+            continue
+        key, raw_value = match.groups()
         if key not in {"name", "description"}:
             continue
-        if not key or not value:
-            raise SkillParseError(f"Missing value for {key or 'metadata field'} at line {number}")
+        if key in metadata:
+            raise SkillParseError(f"Duplicate {key!r} field at line {number}")
+
+        value = raw_value.strip()
+        if key == "description" and value in {">", "|", ">-", "|-", ">+", "|+"}:
+            block_lines = []
+            while index < end and (not lines[index].strip() or lines[index][:1].isspace()):
+                block_lines.append(lines[index])
+                index += 1
+            block = textwrap.dedent("\n".join(block_lines)).strip()
+            value = " ".join(part.strip() for part in block.splitlines()) if value.startswith(">") else block
+        else:
+            value = _clean_scalar(value, number)
+
+        if not value:
+            raise SkillParseError(f"Missing value for {key!r} at line {number}")
         metadata[key] = value
 
     missing = {"name", "description"} - metadata.keys()
@@ -57,5 +99,6 @@ def parse_skill(skill_dir: str | Path) -> tuple[SkillMetadata, Path]:
     return SkillMetadata(
         name=metadata["name"],
         description=metadata["description"],
-        path=str(root),
+        # A relative marker keeps reports portable across different machines.
+        path=".",
     ), skill_file
