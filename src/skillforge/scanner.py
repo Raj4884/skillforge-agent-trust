@@ -124,7 +124,7 @@ def scan_files(skill_dir: str | Path) -> tuple[list[Finding], list[str]]:
     errors: list[str] = []
 
     if not root.exists() or not root.is_dir():
-        return findings, [f"Skill directory does not exist or is not a directory: {root}"]
+        return findings, ["Skill directory is unavailable or is not a directory."]
 
     entries_seen = 0
     def record_walk_error(exc: OSError) -> None:
@@ -158,12 +158,19 @@ def scan_files(skill_dir: str | Path) -> tuple[list[Finding], list[str]]:
 
             for line_number, line in enumerate((content or "").splitlines(), start=1):
                 for rule_id, title, severity, pattern, message in RULES:
-                    if pattern.search(line):
+                    match = pattern.search(line)
+                    if match:
+                        evidence = match.group(0).strip()
+                        if len(evidence) > MAX_EVIDENCE_CHARS:
+                            evidence = evidence[: MAX_EVIDENCE_CHARS - 1] + "…"
                         findings.append(Finding(
                             rule_id=rule_id,
                             title=title,
                             severity=severity,
+                            confidence=RULE_CONFIDENCE[rule_id],
                             message=message,
+                            evidence=evidence,
+                            rule_reference=f"{RULE_REFERENCE_BASE}#rule-{rule_id.lower()}",
                             file_path=relative,
                             line=line_number,
                         ))
