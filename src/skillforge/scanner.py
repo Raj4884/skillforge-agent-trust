@@ -11,15 +11,44 @@ from pathlib import Path
 
 from .models import Finding
 
+# Skill files are untrusted, so every pattern below must run in time linear in
+# the line length. Avoid unbounded gaps between two variable-length parts and
+# adjacent quantifiers over overlapping character classes: both backtrack
+# quadratically (a 100 KB line once took ~10 s). tests/test_rules.py enforces this.
+
+_SHELL = r"(?:(?:ba|z|da|k)?sh)"
+
+# Broad deletion targets: the filesystem root, a top-level system directory, or
+# the home directory itself (optionally quoted, with an optional trailing /*).
+_BROAD_TARGET = (
+    r"""["']?(?:"""
+    r"""/(?:(?:bin|boot|dev|etc|home|lib|lib32|lib64|opt|proc|root|sbin|srv|sys|usr|var"""
+    r"""|Users|System|Library|Applications)/?)?"""
+    r"""|~/?|\$\{?HOME\}?/?"""
+    r""")\*?["']?(?=\s|$|[;&|])"""
+)
+
 RULES = [
     (
         "SF001", "Download piped to shell", "critical",
-        re.compile(r"\b(?:curl|wget)\b[^\n|]*\|\s*(?:(?:ba)?sh|zsh)\b", re.IGNORECASE),
+        re.compile(
+            # curl|wget ... | [sudo [-flags]] [/bin/]sh   (up to 200 characters between)
+            r"\b(?:curl|wget)\b[^\n]{0,200}?\|\s*(?:sudo\s+(?:-\S+\s+)*)?(?:/(?:usr/)?(?:local/)?bin/)?" + _SHELL + r"\b"
+            # sh <(curl ...)
+            r"|\b" + _SHELL + r"\s+<\(\s*(?:curl|wget)\b",
+            re.IGNORECASE,
+        ),
         "Downloads content and pipes it directly into a shell interpreter.",
     ),
     (
         "SF002", "Recursive force deletion", "high",
-        re.compile(r"\brm\s+-[a-zA-Z]*[rf][a-zA-Z]*\s+(?:/|\$HOME\b|~(?:/|\s|$))", re.IGNORECASE),
+        re.compile(
+            # rm with a recursive flag (-r, -R, -rf, -fr, --recursive, ...) aimed at a broad target.
+            # The lookahead finds the flag; the options are then consumed once, in a single pass.
+            r"\brm(?=(?:\s+-\S*)*?\s+(?:-(?=[A-Za-z]*[rR])[A-Za-z]+|--recursive)(?=\s))"
+            r"(?:\s+-\S*)*\s+" + _BROAD_TARGET,
+            re.IGNORECASE,
+        ),
         "Contains a recursive force-delete command targeting a broad location.",
     ),
     (
@@ -29,12 +58,22 @@ RULES = [
     ),
     (
         "SF004", "Environment access", "low",
-        re.compile(r"\b(?:printenv|env)\b|os\.environ|process\.env", re.IGNORECASE),
+        re.compile(
+            r"\bprintenv\b|os\.environ|os\.getenv|process\.env|(?-i:\bENV(?:\[|\{|\.fetch\b))"
+            # `env` only when used as a command (dumping the environment), not as part of
+            # `#!/usr/bin/env python`, `.env`, or the word "env" in prose.
+            r"|(?:^|[;&|`(])\s*(?:\$\s+)?env\s*(?=$|[|;&>)`])",
+            re.IGNORECASE,
+        ),
         "May read environment variables, which can contain secrets.",
     ),
     (
         "SF005", "Instruction override language", "medium",
-        re.compile(r"(?:ignore|override|disregard)\s+(?:all\s+)?(?:previous|prior|system)\s+instructions", re.IGNORECASE),
+        re.compile(
+            r"\b(?:ignore|override|disregard|forget)\s+(?:(?:all|any|your|the|these|those)\s+){0,2}"
+            r"(?:previous|prior|above|earlier|system)\s+instructions",
+            re.IGNORECASE,
+        ),
         "Contains language that may attempt to override higher-priority instructions.",
     ),
 ]

@@ -11,6 +11,17 @@ from .parser import SkillParseError
 SEVERITY_ORDER = {"low": 1, "medium": 2, "high": 3, "critical": 4}
 
 
+def _display(text: str) -> str:
+    """Escape control and invisible-format characters in untrusted text.
+
+    Skill names, descriptions and file names come from the skill under review.
+    Printed raw, ANSI escape sequences, newlines or bidirectional overrides could
+    rewrite or hide the scanner's own output (for example erase the findings).
+    JSON output is already escaped by ``json.dumps``.
+    """
+    return "".join(char if char.isprintable() else char.encode("unicode_escape").decode("ascii") for char in text)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="skillforge", description="Inspect AI agent skills without executing them.")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
@@ -38,15 +49,16 @@ def main() -> int:
     if args.format == "json":
         print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
     else:
-        print(f"Skill: {report.skill.name}")
-        print(f"Description: {report.skill.description}")
+        print(f"Skill: {_display(report.skill.name)}")
+        print(f"Description: {_display(report.skill.description)}")
         print(f"Scanner: {report.scanner_version}")
         print(f"Findings: {report.finding_count}")
         for finding in report.findings:
-            print(f"[{finding.severity.upper()}] {finding.rule_id} {finding.file_path}:{finding.line} — {finding.title}")
+            location = f"{_display(finding.file_path)}:{finding.line}"
+            print(f"[{finding.severity.upper()}] {finding.rule_id} {location} — {finding.title}")
             print(f"  {finding.message}")
         for error in report.errors:
-            print(f"[WARNING] {error}")
+            print(f"[WARNING] {_display(error)}")
         if not report.findings:
             print("No heuristic findings. This is not a guarantee of safety.")
 

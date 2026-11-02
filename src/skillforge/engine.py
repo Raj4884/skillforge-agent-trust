@@ -1,6 +1,7 @@
 """Scan orchestration."""
 
 from pathlib import Path
+
 from . import __version__
 from .models import ScanReport
 from .parser import parse_skill

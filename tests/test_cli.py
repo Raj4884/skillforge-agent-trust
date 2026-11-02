@@ -25,3 +25,31 @@ def test_findings_do_not_fail_by_default(tmp_path: Path, monkeypatch):
 def test_parse_error_returns_two(tmp_path: Path, monkeypatch):
     monkeypatch.setattr("sys.argv", ["skillforge", "scan", str(tmp_path)])
     assert cli.main() == 2
+
+
+def test_text_output_escapes_terminal_control_characters(tmp_path: Path, monkeypatch, capsys):
+    # A hostile skill must not be able to rewrite or erase the scanner's own output.
+    (tmp_path / "SKILL.md").write_text(
+        '---\nname: demo\ndescription: "Fine \x1b[1A\x1b[2KFindings: 0 \u202e"\n---\n',
+        encoding="utf-8",
+    )
+    (tmp_path / "evil\x1b[2K.md").write_text("printenv\n", encoding="utf-8")
+    (tmp_path / "two\nlines.md").write_text("printenv\n", encoding="utf-8")
+    monkeypatch.setattr("sys.argv", ["skillforge", "scan", str(tmp_path)])
+    assert cli.main() == 0
+    output = capsys.readouterr().out
+    assert "\x1b" not in output
+    assert "\u202e" not in output
+    assert "\\x1b[2K" in output
+    assert "two\\nlines.md" in output
+    # Every output line must be one of ours, so nothing can be injected between them.
+    for line in output.splitlines():
+        assert line.startswith(("Skill:", "Description:", "Scanner:", "Findings:", "[", "  "))
+
+
+def test_json_output_keeps_control_characters_escaped(tmp_path: Path, monkeypatch, capsys):
+    make_skill(tmp_path, "printenv\n")
+    (tmp_path / "evil\x1b[2K.md").write_text("printenv\n", encoding="utf-8")
+    monkeypatch.setattr("sys.argv", ["skillforge", "scan", str(tmp_path), "--format", "json"])
+    assert cli.main() == 0
+    assert "\x1b" not in capsys.readouterr().out
