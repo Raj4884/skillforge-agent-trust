@@ -128,7 +128,7 @@ def scan_files(skill_dir: str | Path) -> tuple[list[Finding], list[str]]:
 
     entries_seen = 0
     def record_walk_error(exc: OSError) -> None:
-        errors.append(f"Could not traverse {exc.filename or root}: {exc}")
+        errors.append("Could not traverse a directory: " + (exc.strerror or "filesystem error"))
 
     for current, directories, filenames in os.walk(root, topdown=True, followlinks=False, onerror=record_walk_error):
         current_path = Path(current)

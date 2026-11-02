@@ -1,23 +1,48 @@
 # Scanner rules
 
-Rules are heuristic signals for manual review. They are not a malware verdict.
+Rules are heuristic signals for manual review, not a malware verdict. Confidence
+describes confidence that the pattern matched as intended; it is not a probability
+that a skill is malicious.
 
-| ID | Severity | Current signal | Important limitation |
-|---|---|---|---|
-| SF001 | Critical | `curl` or `wget` piped into a shell (`sh`, `bash`, `zsh`, `dash`, `ksh`, optionally via `sudo` or `/bin/`), or `sh <(curl ...)` | Does not detect every download-and-execute technique, such as piping into `python` or a download saved to disk and run later |
-| SF002 | High | `rm` with a recursive flag (`-r`, `-R`, `-rf`, `--recursive`, ...) targeting `/`, a top-level system directory, or the home directory itself | Only a broad *target* is flagged, so `rm -rf /tmp/build` is not. Shell syntax and quoting variants may evade the pattern |
-| SF003 | Medium | References to common SSH, AWS, Google Cloud, or npm credential paths | A path reference may be documentation or a legitimate operation. Other credential stores (`.kube/config`, `.netrc`, `.gnupg`, ...) are not covered yet |
-| SF004 | Low | Environment-variable access: `os.environ`, `os.getenv`, `process.env`, `ENV[...]`, `printenv`, or `env` used as a command | Environment access is often legitimate. `env` inside a shebang, `.env` file names, or prose is not flagged |
-| SF005 | Medium | Phrases that resemble attempts to override prior/system instructions (for example "ignore your previous instructions") | Context matters; legitimate defensive instructions can match |
+## Rule reference
 
-## Rule quality requirements
+### SF001 — Download piped to shell {#rule-sf001}
+- Severity: Critical; confidence: High.
+- Signal: curl or wget piped into a shell interpreter, including common sudo,
+  /bin/sh, and process-substitution forms.
+- Limitation: Does not detect every download-and-execute technique.
 
-Every new rule should include:
-- A stable identifier that is never silently reused.
-- A concise explanation of the evidence being detected.
-- At least one positive fixture and one benign negative fixture.
-- A documented severity rationale.
-- Known bypasses and false-positive limitations.
-- A pattern that runs in linear time. Skill files are untrusted, so avoid unbounded gaps between two variable-length parts and adjacent quantifiers over overlapping character classes. `tests/test_rules.py` runs every rule against adversarial long lines.
+### SF002 — Recursive deletion of broad target {#rule-sf002}
+- Severity: High; confidence: High.
+- Signal: rm with a recursive option targeting /, a top-level system directory,
+  or the home directory itself.
+- Limitation: Detects recursion, not necessarily the -f flag. Specific project
+  paths such as /tmp/build are not flagged. Complex shell expansion may evade it.
 
-A finding means “review this evidence,” not “this skill is malicious.” Rule matches are currently line-based and may miss multi-line or obfuscated behaviour.
+### SF003 — Credential path reference {#rule-sf003}
+- Severity: Medium; confidence: Medium.
+- Signal: References to common SSH, AWS, Google Cloud, or npm credential paths.
+- Limitation: A path reference may be documentation or a legitimate operation.
+
+### SF004 — Environment access {#rule-sf004}
+- Severity: Low; confidence: Low.
+- Signal: Common access patterns such as os.environ, os.getenv, process.env,
+  ENV[], printenv, or env as a command.
+- Limitation: Environment access is often legitimate; this does not prove a
+  secret was read or transmitted.
+
+### SF005 — Instruction override language {#rule-sf005}
+- Severity: Medium; confidence: Medium.
+- Signal: Phrases resembling attempts to override prior or system instructions.
+- Limitation: Legitimate defensive documentation may match.
+
+## Finding fields
+
+Each finding includes stable rule ID, severity, qualitative confidence, bounded
+matched evidence, explanation, rule-reference URL, relative file path, and
+1-based line number. Evidence is untrusted source text and must be escaped in
+terminals and web pages. Confidence is not a calibrated statistical score.
+
+Every new rule needs positive and benign negative fixtures, severity rationale,
+known bypasses, false-positive notes, and linear-time matching. Rule IDs are
+stable and must never be silently reused. Matching is line-based.
