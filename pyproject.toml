@@ -16,6 +16,11 @@ dependencies = []
 dev = ["pytest>=8,<9", "ruff>=0.6,<1"]
 build = ["build>=1,<2"]
 
+[project.urls]
+Homepage = "https://github.com/Raj4884/skillforge-agent-trust"
+Issues = "https://github.com/Raj4884/skillforge-agent-trust/issues"
+Changelog = "https://github.com/Raj4884/skillforge-agent-trust/blob/main/CHANGELOG.md"
+
 [project.scripts]
 skillforge = "skillforge.cli:main"
 

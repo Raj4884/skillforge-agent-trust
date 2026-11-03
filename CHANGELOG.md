@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — Reliable evidence engine (2026-11-03)
+
+Findings now explain themselves: each one carries the matched text, a confidence level and a link to its rule. The JSON report is versioned, the scanner resists hostile input, and a fixture corpus measures its accuracy.
+
+**Upgrade notes:** the JSON report gains fields (additive). `--fail-on` now exits 1 when a finding meets the threshold even if a file was skipped (previously 2). SF002 was renamed to "Recursive deletion of broad target".
 
 ### Added
 
