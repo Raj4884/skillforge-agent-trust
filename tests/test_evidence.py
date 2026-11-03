@@ -86,3 +86,19 @@ def test_json_report_carries_the_schema_version(tmp_path: Path, monkeypatch, cap
     report = json.loads(capsys.readouterr().out)
     assert report["schema_version"] == REPORT_SCHEMA_VERSION
     assert set(report["findings"][0]) >= {"rule_id", "severity", "confidence", "evidence", "rule_reference"}
+
+
+def test_report_schema_page_documents_every_field(tmp_path: Path, monkeypatch, capsys):
+    # docs/REPORT_SCHEMA.md is the contract for consumers of the JSON report; it
+    # must list every field the scanner really emits.
+    import json
+
+    (tmp_path / "SKILL.md").write_text("---\nname: demo\ndescription: demo\n---\nprintenv\n", encoding="utf-8")
+    monkeypatch.setattr("sys.argv", ["skillforge", "scan", str(tmp_path), "--format", "json"])
+    assert cli.main() == 0
+    report = json.loads(capsys.readouterr().out)
+    page = (RULES_DOC.parent / "REPORT_SCHEMA.md").read_text(encoding="utf-8")
+    keys = set(report) | set(report["skill"]) | set(report["summary"]) | set(report["findings"][0])
+    missing = sorted(key for key in keys if f"`{key}`" not in page)
+    assert not missing, f"docs/REPORT_SCHEMA.md does not document: {missing}"
+    assert f'"schema_version": "{REPORT_SCHEMA_VERSION}"' in page
