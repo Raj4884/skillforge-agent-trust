@@ -1,0 +1,225 @@
+[
+  {
+    "case": "m01-curl-bash-installer",
+    "label": "malicious",
+    "should": [
+      "SF001"
+    ],
+    "expected": [
+      "SF001"
+    ],
+    "note": "Classic download piped to bash."
+  },
+  {
+    "case": "m02-sudo-bash-script",
+    "label": "malicious",
+    "should": [
+      "SF001"
+    ],
+    "expected": [
+      "SF001"
+    ],
+    "note": "Pipe into sudo bash, inside a script file."
+  },
+  {
+    "case": "m03-eval-curl",
+    "label": "malicious",
+    "should": [
+      "SF001"
+    ],
+    "expected": [
+      "SF001"
+    ],
+    "note": "eval of a downloaded script."
+  },
+  {
+    "case": "m04-python-pipe",
+    "label": "malicious",
+    "should": [
+      "SF001"
+    ],
+    "expected": [
+      "SF001"
+    ],
+    "note": "Download piped to a Python interpreter."
+  },
+  {
+    "case": "m05-wipe-home",
+    "label": "malicious",
+    "should": [
+      "SF002"
+    ],
+    "expected": [
+      "SF002"
+    ],
+    "note": "Recursive deletion of the home directory."
+  },
+  {
+    "case": "m06-wipe-root",
+    "label": "malicious",
+    "should": [
+      "SF002"
+    ],
+    "expected": [
+      "SF002"
+    ],
+    "note": "Recursive deletion of the filesystem root."
+  },
+  {
+    "case": "m07-ssh-key-read",
+    "label": "malicious",
+    "should": [
+      "SF003"
+    ],
+    "expected": [
+      "SF003"
+    ],
+    "note": "Instructs the agent to read a private key."
+  },
+  {
+    "case": "m08-kube-netrc",
+    "label": "malicious",
+    "should": [
+      "SF003"
+    ],
+    "expected": [
+      "SF003"
+    ],
+    "note": "Targets cluster and login credentials."
+  },
+  {
+    "case": "m09-prompt-override",
+    "label": "malicious",
+    "should": [
+      "SF005"
+    ],
+    "expected": [
+      "SF005"
+    ],
+    "note": "Direct instruction override."
+  },
+  {
+    "case": "m10-env-dump",
+    "label": "malicious",
+    "should": [
+      "SF004"
+    ],
+    "expected": [
+      "SF004"
+    ],
+    "note": "Dumps the whole environment, which can hold secrets."
+  },
+  {
+    "case": "m11-multi-signal",
+    "label": "malicious",
+    "should": [
+      "SF001",
+      "SF003",
+      "SF005"
+    ],
+    "expected": [
+      "SF001",
+      "SF003",
+      "SF005"
+    ],
+    "note": "Several signals in one skill."
+  },
+  {
+    "case": "g01-download-then-run",
+    "label": "malicious",
+    "should": [
+      "SF001"
+    ],
+    "expected": [],
+    "note": "KNOWN GAP: download and execution on separate lines. Rules are line-based."
+  },
+  {
+    "case": "g02-encoded-payload",
+    "label": "malicious",
+    "should": [
+      "SF001"
+    ],
+    "expected": [],
+    "note": "KNOWN GAP: encoded payload decoded into a shell; no download for SF001 to see."
+  },
+  {
+    "case": "g03-find-delete",
+    "label": "malicious",
+    "should": [
+      "SF002"
+    ],
+    "expected": [],
+    "note": "KNOWN GAP: destructive command other than rm."
+  },
+  {
+    "case": "g04-paraphrased-override",
+    "label": "malicious",
+    "should": [
+      "SF005"
+    ],
+    "expected": [],
+    "note": "KNOWN GAP: paraphrased override that avoids the matched phrases."
+  },
+  {
+    "case": "b01-plain-docs",
+    "label": "benign",
+    "should": [],
+    "expected": [],
+    "note": "Ordinary documentation."
+  },
+  {
+    "case": "b02-json-pretty-print",
+    "label": "benign",
+    "should": [],
+    "expected": [],
+    "note": "Download piped to a formatter, not an interpreter reading a program."
+  },
+  {
+    "case": "b03-cleanup-temp",
+    "label": "benign",
+    "should": [],
+    "expected": [],
+    "note": "Recursive delete of specific project paths."
+  },
+  {
+    "case": "b04-env-shebang",
+    "label": "benign",
+    "should": [],
+    "expected": [],
+    "note": "Shebang and dotenv file names, not environment access."
+  },
+  {
+    "case": "b05-ssh-prose",
+    "label": "benign",
+    "should": [],
+    "expected": [],
+    "note": "Mentions SSH without any credential path."
+  },
+  {
+    "case": "f01-reads-config-env",
+    "label": "benign",
+    "should": [],
+    "expected": [
+      "SF004"
+    ],
+    "note": "KNOWN FALSE POSITIVE: legitimate configuration read. SF004 is low severity for this reason."
+  },
+  {
+    "case": "f02-ssh-config-docs",
+    "label": "benign",
+    "should": [],
+    "expected": [
+      "SF003"
+    ],
+    "note": "KNOWN FALSE POSITIVE: documentation that mentions the .ssh directory."
+  },
+  {
+    "case": "f03-defensive-doc",
+    "label": "benign",
+    "should": [],
+    "expected": [
+      "SF005"
+    ],
+    "note": "KNOWN FALSE POSITIVE: defensive guidance quotes the attack phrase."
+  }
+]
