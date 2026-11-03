@@ -1,43 +1,35 @@
 # Threat model
 
 ## Scope
+SkillForge v0.2 statically inspects local skill files. It never executes skill code.
 
-SkillForge v0.1.x statically inspects local files that describe AI agent skills. It does not execute skill scripts or instructions.
-
-## Assets to protect
-
-- The developer's workstation and local files.
-- Credentials available to the developer's environment.
-- Integrity of the scan report.
-- Confidentiality of skill source content.
+## Assets
+- Developer workstation and local files.
+- Credentials available to the environment.
+- Integrity of scan reports and confidentiality of skill source.
 
 ## Trust boundaries
+All skill content, filenames, metadata, and embedded snippets are untrusted data.
 
-All skill content is untrusted input. A filename, metadata field, markdown instruction, script, or embedded snippet must be treated as data—not as instructions to SkillForge or its operator.
-
-## Current safeguards
-
+## Safeguards
 - No skill code is imported or executed.
-- SKILL.md metadata reads are bounded to 256 KB.
-- Scanner reads are bounded to 1 MB per file and 10,000 filesystem entries per scan.
-- Scanner reads a restricted set of text file extensions.
-- Symlinked files and directories are skipped; common generated directories are excluded.
-- Findings are sorted by relative path, line, and rule ID.
-- Findings explain the pattern observed; they do not claim malicious intent.
+- SKILL.md reads are bounded to 256 KB; scanner files to 1 MB; traversal to
+  10,000 entries.
+- Supported text extensions only; symlinks and common generated directories skipped.
+- Deterministic findings, relative paths, bounded evidence snippets.
+- Terminal output escapes control and invisible-format characters.
+- Error messages avoid exposing absolute local paths.
 
 ## Limitations
-
-- Static pattern matching cannot understand all program semantics.
-- Obfuscated, generated, encoded, indirect, or multi-line behaviour may not be detected.
-- Harmless examples may trigger false positives.
-- The scanner does not inspect every file format.
-- Filesystem protections are best-effort across operating systems; concurrent filesystem changes and platform differences remain relevant.
-- A clean report is not a certification or safety guarantee.
+- Parser is a limited dependency-free YAML-frontmatter parser, not full YAML.
+- Static patterns cannot understand all program semantics; obfuscated, indirect,
+  encoded, or multi-line behaviour may evade detection.
+- False positives are expected. Confidence is qualitative, not calibrated risk.
+- Filesystem protections are best-effort across operating systems.
+- A clean report is not certification or a safety guarantee.
 
 ## Future dynamic evaluation
-
-Dynamic evaluation is out of scope until a dedicated isolation design is reviewed. Any future execution must use disposable isolation, no network by default, strict CPU/memory/time limits, no host credentials, read-only input mounts where possible, and explicit user consent. A container alone should not be treated as a complete security boundary.
-
-## Reporting
-
-For a suspected vulnerability in SkillForge itself, follow [SECURITY.md](../SECURITY.md). Avoid publishing exploit details before a fix is available.
+Out of scope until a dedicated isolation design is reviewed. Any future execution
+must use disposable isolation, no network by default, strict resource limits,
+no host credentials, read-only input mounts where possible, and explicit consent.
+A container alone is not a complete security boundary.

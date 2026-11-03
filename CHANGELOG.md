@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Added
+
+- Findings now carry the matched `evidence` (the matching text only, capped at 240 characters), a qualitative `confidence` (`low`, `medium` or `high`) and a `rule_reference` link to the rule's section in `docs/RULES.md`.
+- JSON reports include a `schema_version` field (currently `1.0`). The text report shows evidence, confidence and the rule reference for every finding.
+- CI runs Ruff and builds and smoke-tests the wheel.
+- Tests keep `docs/RULES.md` (titles, severities, confidence, anchors) in sync with the scanner rules.
+
+### Changed
+
+- SF002 is now titled "Recursive deletion of broad target" to match what it detects (a recursive delete aimed at `/`, a top-level system directory or the home directory, with or without `-f`).
+- Error messages no longer include absolute local paths.
+
 ### Security
 
 - Fixed quadratic regex backtracking in SF001, SF002 and the parser's comment stripping. A hostile skill could stall a scan for minutes (SF001 took about 10 s on a 100 KB line). Every rule is now linear-time and covered by timing tests.

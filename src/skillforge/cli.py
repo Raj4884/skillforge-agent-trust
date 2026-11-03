@@ -55,8 +55,10 @@ def main() -> int:
         print(f"Findings: {report.finding_count}")
         for finding in report.findings:
             location = f"{_display(finding.file_path)}:{finding.line}"
-            print(f"[{finding.severity.upper()}] {finding.rule_id} {location} — {finding.title}")
-            print(f"  {finding.message}")
+            print(f"[{finding.severity.upper()}] {finding.rule_id} {location} ({finding.confidence} confidence) — {finding.title}")
+            print(f"  Evidence: {_display(finding.evidence)}")
+            print(f"  Why: {_display(finding.message)}")
+            print(f"  Rule: {finding.rule_reference}")
         for error in report.errors:
             print(f"[WARNING] {_display(error)}")
         if not report.findings:
