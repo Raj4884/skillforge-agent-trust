@@ -1,11 +1,17 @@
+"""Typed data models used by the scanner."""
+
 from dataclasses import asdict, dataclass, field
 from typing import Any
+
+REPORT_SCHEMA_VERSION = "1.0"
+
 
 @dataclass(frozen=True)
 class SkillMetadata:
     name: str
     description: str
     path: str
+
 
 @dataclass(frozen=True)
 class Finding:
@@ -18,6 +24,7 @@ class Finding:
     rule_reference: str
     file_path: str
     line: int
+
 
 @dataclass
 class ScanReport:
@@ -32,7 +39,7 @@ class ScanReport:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "schema_version": "1.0",
+            "schema_version": REPORT_SCHEMA_VERSION,
             "scanner_version": self.scanner_version,
             "skill": asdict(self.skill),
             "summary": {"finding_count": self.finding_count, "error_count": len(self.errors)},

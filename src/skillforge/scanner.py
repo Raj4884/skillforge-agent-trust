@@ -41,7 +41,7 @@ RULES = [
         "Downloads content and pipes it directly into a shell interpreter.",
     ),
     (
-        "SF002", "Recursive force deletion", "high",
+        "SF002", "Recursive deletion of broad target", "high",
         re.compile(
             # rm with a recursive flag (-r, -R, -rf, -fr, --recursive, ...) aimed at a broad target.
             # The lookahead finds the flag; the options are then consumed once, in a single pass.
@@ -49,7 +49,7 @@ RULES = [
             r"(?:\s+-\S*)*\s+" + _BROAD_TARGET,
             re.IGNORECASE,
         ),
-        "Contains a recursive force-delete command targeting a broad location.",
+        "Contains a recursive delete command targeting a broad location.",
     ),
     (
         "SF003", "Credential path reference", "medium",
@@ -82,6 +82,26 @@ TEXT_SUFFIXES = {".md", ".txt", ".py", ".sh", ".bash", ".zsh", ".js", ".ts", ".j
 IGNORED_DIRS = {".git", ".hg", ".svn", ".venv", "venv", "node_modules", "__pycache__", ".pytest_cache", "dist", "build"}
 MAX_FILE_BYTES = 1_000_000
 MAX_ENTRIES = 10_000
+
+# Evidence is the matched text only (never the whole line) and is capped so a
+# finding stays small even when a rule matches a long span. It is untrusted
+# skill content: escape it before showing it anywhere.
+MAX_EVIDENCE_CHARS = 240
+
+# Findings link to the matching section of the rule reference. The path is
+# relative to the repository root so reports stay portable.
+RULE_REFERENCE_BASE = "docs/RULES.md"
+
+# Qualitative confidence that the pattern matched as intended, not a probability
+# that a skill is malicious. Keep in sync with docs/RULES.md; every rule in
+# RULES needs an entry (tests/test_rules.py enforces this).
+RULE_CONFIDENCE = {
+    "SF001": "high",
+    "SF002": "high",
+    "SF003": "medium",
+    "SF004": "low",
+    "SF005": "medium",
+}
 
 
 def _read_text_limited(path: Path) -> tuple[str | None, str | None]:

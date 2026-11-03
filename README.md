@@ -59,7 +59,7 @@ python -m pytest -q
 | Rule | Severity | Meaning |
 |---|---|---|
 | SF001 | Critical | Shell download piped into an interpreter |
-| SF002 | High | Recursive force deletion targeting a broad path |
+| SF002 | High | Recursive deletion targeting a broad path |
 | SF003 | Medium | References to common credential locations |
 | SF004 | Low | Common environment-variable access patterns |
 | SF005 | Medium | Prompt or instruction override language |

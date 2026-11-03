@@ -6,32 +6,42 @@ that a skill is malicious.
 
 ## Rule reference
 
-### SF001 — Download piped to shell {#rule-sf001}
+<a id="rule-sf001"></a>
+
+### SF001 — Download piped to shell
 - Severity: Critical; confidence: High.
 - Signal: curl or wget piped into a shell interpreter, including common sudo,
   /bin/sh, and process-substitution forms.
 - Limitation: Does not detect every download-and-execute technique.
 
-### SF002 — Recursive deletion of broad target {#rule-sf002}
+<a id="rule-sf002"></a>
+
+### SF002 — Recursive deletion of broad target
 - Severity: High; confidence: High.
 - Signal: rm with a recursive option targeting /, a top-level system directory,
   or the home directory itself.
 - Limitation: Detects recursion, not necessarily the -f flag. Specific project
   paths such as /tmp/build are not flagged. Complex shell expansion may evade it.
 
-### SF003 — Credential path reference {#rule-sf003}
+<a id="rule-sf003"></a>
+
+### SF003 — Credential path reference
 - Severity: Medium; confidence: Medium.
 - Signal: References to common SSH, AWS, Google Cloud, or npm credential paths.
 - Limitation: A path reference may be documentation or a legitimate operation.
 
-### SF004 — Environment access {#rule-sf004}
+<a id="rule-sf004"></a>
+
+### SF004 — Environment access
 - Severity: Low; confidence: Low.
 - Signal: Common access patterns such as os.environ, os.getenv, process.env,
   ENV[], printenv, or env as a command.
 - Limitation: Environment access is often legitimate; this does not prove a
   secret was read or transmitted.
 
-### SF005 — Instruction override language {#rule-sf005}
+<a id="rule-sf005"></a>
+
+### SF005 — Instruction override language
 - Severity: Medium; confidence: Medium.
 - Signal: Phrases resembling attempts to override prior or system instructions.
 - Limitation: Legitimate defensive documentation may match.
