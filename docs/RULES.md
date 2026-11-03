@@ -11,8 +11,13 @@ that a skill is malicious.
 ### SF001 — Download piped to shell
 - Severity: Critical; confidence: High.
 - Signal: curl or wget piped into a shell interpreter, including common sudo,
-  /bin/sh, and process-substitution forms.
-- Limitation: Does not detect every download-and-execute technique.
+  /bin/sh, and process-substitution forms. Also curl or wget piped into
+  python, node, perl or ruby when the interpreter reads the program from the
+  pipe (bare, or with a trailing `-`), and `eval "$(curl ...)"` or
+  `bash -c "$(curl ...)"`.
+- Limitation: Does not detect every download-and-execute technique, such as a
+  download saved to disk and run later. `curl ... | python3 -m json.tool` and
+  `python -c "..."` are not flagged because they process the download as data.
 
 <a id="rule-sf002"></a>
 
@@ -27,8 +32,12 @@ that a skill is malicious.
 
 ### SF003 — Credential path reference
 - Severity: Medium; confidence: Medium.
-- Signal: References to common SSH, AWS, Google Cloud, or npm credential paths.
+- Signal: References to common credential paths: SSH keys and the `.ssh`
+  directory, AWS credentials, Google Cloud config, npm (`.npmrc`), `.netrc`,
+  GnuPG (`.gnupg`), Kubernetes (`.kube/config`), and Docker
+  (`.docker/config.json`).
 - Limitation: A path reference may be documentation or a legitimate operation.
+  Other credential stores are not covered yet.
 
 <a id="rule-sf004"></a>
 
