@@ -8,6 +8,7 @@
 - JSON reports include a `schema_version` field (currently `1.0`). The text report shows evidence, confidence and the rule reference for every finding.
 - CI runs Ruff and builds and smoke-tests the wheel.
 - Tests keep `docs/RULES.md` (titles, severities, confidence, anchors) in sync with the scanner rules.
+- A fixture corpus of 23 inert skills (`tests/corpus/`): malicious, benign, known gaps and known false positives. A regression test pins the scanner's behavior on each, and `docs/EVALUATION.md` reports per-rule recall and precision. `python tests/corpus_report.py --write` regenerates the page and a test fails if it is stale.
 
 ### Changed
 

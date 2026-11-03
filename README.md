@@ -72,7 +72,7 @@ python -m pytest -q
 | SF004 | Low | Common environment-variable access patterns |
 | SF005 | Medium | Prompt or instruction override language |
 
-See [the rule reference](docs/RULES.md) for limitations and contribution requirements. Findings are heuristic indicators for human review, not proof of maliciousness. False positives and false negatives are expected.
+See [the rule reference](docs/RULES.md) for limitations and contribution requirements. Findings are heuristic indicators for human review, not proof of maliciousness. False positives and false negatives are expected. Measured results on a small fixture corpus, including every known gap and false positive, are in [the evaluation](docs/EVALUATION.md).
 
 ## Design principles
 
@@ -92,7 +92,8 @@ The scanner skips common generated directories such as `.git`, `.venv`, `venv`, 
 - [x] Basic multiline descriptions and duplicate metadata validation
 - [x] CI matrix for Python 3.10–3.13
 - [ ] Add rule confidence and matched evidence snippets
-- [ ] Expand fixture corpus and false-positive regression tests
+- [x] Initial fixture corpus with documented gaps and false positives ([evaluation](docs/EVALUATION.md))
+- [ ] Grow the corpus with real-world and community-submitted skills
 - [ ] Add baseline comparison between skill versions
 - [ ] Design isolated dynamic evaluation (separate milestone; never run on the host)
 - [ ] Publish reproducible benchmark protocol
