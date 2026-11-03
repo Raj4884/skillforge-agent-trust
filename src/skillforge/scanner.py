@@ -18,6 +18,21 @@ from .models import Finding
 
 _SHELL = r"(?:(?:ba|z|da|k)?sh)"
 
+# Interpreters that execute a script read from stdin. They only count when they
+# read the program from the pipe (bare, or with a trailing `-`), so harmless
+# data processing such as `curl ... | python3 -m json.tool` or
+# `... | python -c "..."` is not flagged.
+_STDIN_INTERPRETER = (
+    r"(?:python[0-9]*(?:\.[0-9]+)?|node|perl|ruby)"
+    r"(?=\s*(?:$|[;&|)]|-(?:\s|$)))"
+)
+
+# Command substitution that runs downloaded text: eval "$(curl ...)",
+# eval `curl ...`, bash -c "$(curl ...)".
+_RUN_DOWNLOAD = (
+    r"\b(?:eval|" + _SHELL + r"\s+-c)\s+[\"']?(?:\$\(|`)\s*(?:curl|wget)\b"
+)
+
 # Broad deletion targets: the filesystem root, a top-level system directory, or
 # the home directory itself (optionally quoted, with an optional trailing /*).
 _BROAD_TARGET = (
@@ -33,9 +48,12 @@ RULES = [
         "SF001", "Download piped to shell", "critical",
         re.compile(
             # curl|wget ... | [sudo [-flags]] [/bin/]sh   (up to 200 characters between)
-            r"\b(?:curl|wget)\b[^\n]{0,200}?\|\s*(?:sudo\s+(?:-\S+\s+)*)?(?:/(?:usr/)?(?:local/)?bin/)?" + _SHELL + r"\b"
+            r"\b(?:curl|wget)\b[^\n]{0,200}?\|\s*(?:sudo\s+(?:-\S+\s+)*)?(?:/(?:usr/)?(?:local/)?bin/)?"
+            r"(?:" + _SHELL + r"\b|" + _STDIN_INTERPRETER + r")"
             # sh <(curl ...)
-            r"|\b" + _SHELL + r"\s+<\(\s*(?:curl|wget)\b",
+            r"|\b" + _SHELL + r"\s+<\(\s*(?:curl|wget)\b"
+            # eval "$(curl ...)" and bash -c "$(curl ...)"
+            r"|" + _RUN_DOWNLOAD,
             re.IGNORECASE,
         ),
         "Downloads content and pipes it directly into a shell interpreter.",
@@ -53,7 +71,11 @@ RULES = [
     ),
     (
         "SF003", "Credential path reference", "medium",
-        re.compile(r"(?:\.ssh(?:/|\b)|\.aws/credentials|\.config/gcloud|id_rsa|\.npmrc)", re.IGNORECASE),
+        re.compile(
+            r"\.ssh(?:/|\b)|\.aws/credentials|\.config/gcloud|\.npmrc|\.netrc|\.gnupg|\.kube/config"
+            r"|\.docker/config\.json|\bid_(?:rsa|dsa|ecdsa|ed25519)\b",
+            re.IGNORECASE,
+        ),
         "References a common credential or private-key location.",
     ),
     (
