@@ -10,6 +10,8 @@
 - Tests keep `docs/RULES.md` (titles, severities, confidence, anchors) in sync with the scanner rules.
 
 ### Changed
+- SF001 now also flags `eval "$(curl ...)"` and `bash -c "$(curl ...)"` (the common one-line installer form), and `curl ... | python3`, `node`, `perl` or `ruby` when the interpreter reads the program from the pipe. `curl ... | python3 -m json.tool` and `python -c "..."` are not flagged.
+- SF003 now covers `.netrc`, `.gnupg`, `.kube/config`, `.docker/config.json` and `id_dsa`, `id_ecdsa`, `id_ed25519` keys. Key names now match as whole words, so `id_rsa_note` no longer matches.
 
 - **Behavior change:** `--fail-on` now exits with 1 whenever a finding meets the threshold, even if some files were skipped or could not be read. Previously any scan error returned 2 first, so a critical finding could be reported as a mere warning in CI. Scan errors still return 2 when no finding meets the threshold. The README documents all exit codes.
 - **Behavior change:** `--fail-on` now exits with 1 whenever a finding meets the threshold, even if some files were skipped or could not be read. Previously any scan error returned 2 first, so a critical finding could be reported as a mere warning in CI. Scan errors still return 2 when no finding meets the threshold. The README documents all exit codes.
