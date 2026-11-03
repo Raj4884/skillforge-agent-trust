@@ -12,6 +12,7 @@
 ### Changed
 
 - **Behavior change:** `--fail-on` now exits with 1 whenever a finding meets the threshold, even if some files were skipped or could not be read. Previously any scan error returned 2 first, so a critical finding could be reported as a mere warning in CI. Scan errors still return 2 when no finding meets the threshold. The README documents all exit codes.
+- **Behavior change:** `--fail-on` now exits with 1 whenever a finding meets the threshold, even if some files were skipped or could not be read. Previously any scan error returned 2 first, so a critical finding could be reported as a mere warning in CI. Scan errors still return 2 when no finding meets the threshold. The README documents all exit codes.
 - SF002 is now titled "Recursive deletion of broad target" to match what it detects (a recursive delete aimed at `/`, a top-level system directory or the home directory, with or without `-f`).
 - Error messages no longer include absolute local paths.
 
