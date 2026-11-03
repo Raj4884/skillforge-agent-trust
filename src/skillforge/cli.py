@@ -64,12 +64,15 @@ def main() -> int:
         if not report.findings:
             print("No heuristic findings. This is not a guarantee of safety.")
 
-    if report.errors:
-        return 2
+    # A finding at or above the threshold is a policy failure and must not be
+    # hidden by an unrelated scan warning (such as one skipped file), so it is
+    # checked first. Scan errors only decide the exit code when the policy passes.
     if args.fail_on != "none":
         threshold = SEVERITY_ORDER[args.fail_on]
         if any(SEVERITY_ORDER[item.severity] >= threshold for item in report.findings):
             return 1
+    if report.errors:
+        return 2
     return 0
 
 

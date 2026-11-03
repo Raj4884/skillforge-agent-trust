@@ -46,7 +46,15 @@ Fail a CI job when a critical finding is present:
 skillforge scan examples/demo-skill --fail-on critical
 ```
 
-Available thresholds: `none`, `low`, `medium`, `high`, and `critical`. By default, findings do not fail the command; scan errors return exit code 2.
+Available thresholds: `none`, `low`, `medium`, `high`, and `critical`. By default, findings do not fail the command.
+
+Exit codes:
+
+| Code | Meaning |
+|---|---|
+| 0 | Scan completed and no finding met the `--fail-on` threshold |
+| 1 | At least one finding met the `--fail-on` threshold, even if some files could not be scanned |
+| 2 | The skill could not be parsed, or the scan had errors (such as a skipped file) and no finding met the threshold |
 
 Run tests:
 
